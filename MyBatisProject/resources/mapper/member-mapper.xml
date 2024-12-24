@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 전체가 mapper로 감싸져 있어야함 -->
+<mapper namespace="memberMapper">
+<!-- namespace :  해당 mapper의 고유한 별칭. 경로가 달라지면 같은 이름의 mapper를 또 만들수 있기 때문에
+파일 이름만으로는 구분할 수 없다. 진짜로 파일을 구분하는 속성.
+mapper들끼리 namespace 값이 겹치면 안 된다. -->
+
+	<!-- 
+		* DML일 경우
+		<insert id="각 SQL문의 식별자" parameterType="SQL문을 실행할 때 필요한 자바타입(풀클래스명 혹은 별칭)">
+			쿼리문
+		</insert>
+		<update></update>
+		<delete></delete>
+		
+		그동안 pstmt객체를 이용해서 ?를 사용했지만
+		앞으로는 위치홀더 대신 해당 SQL문에 전달된 객체러부터 값을 꺼내서 사용
+		=> 내부적으로 getter메소드를 호출함.
+		값을 꺼내는 방법 #{ 필드명 또는 변수명 또는 map의 키값} 을 이용
+	 -->
+	 
+	 <insert id="insertMember" parameterType="com.kh.ssuper.member.model.vo.Member">
+	 	INSERT 
+	 	  INTO 
+	 	  	   MEMBER
+	 	  	   (
+	 	  	   USER_NO, 
+	 	  	   USER_ID, 
+	 	  	   USER_PWD, 
+	 	  	   USER_NAME, 
+	 	  	   EMAIL, 
+	 	  	   INTEREST
+	 	  	   ) 
+	 	VALUES
+	 		   (
+	 		   SEQ_UNO.NEXTVAL, 
+	 		   #{userId}, 
+	 		   #{userPwd}, 
+	 		   #{userName}, 
+	 		   #{email}, 
+	 		   #{interest}
+	 		   )
+	 </insert>
+	 
+	 <!-- 
+	 	* SELECT문일 경우
+	 	<select id="각 SQL문의 식별자" parameterType="SQL문을 실행할 때 필요한 자바타입(풀클래스명) 혹은 별칭"
+	 	resultType="조회결과를 반환하는 자바타입" 또는 resultMap="조회결과를 뽑아서 매핑할 resultMap의 Id">
+	 		쿼리문
+	 	</select>
+	 	=> parameterType속성은 전달받을 값이 없다면 생략 가능.
+	 
+	 
+	 	* resultMap : 마이바티스에서 가장 중요하고 강력한 요소
+	 				ResultSet으로부터 조회한 컬럼의 값을 하나씩 뽑아서 
+	 				내가 지정한 VO객체에 각 필드에 담는 JDBC코드를 줄여주는 역할 수행
+	 				
+	 	  if(rset.next()){
+	 	  		Member m = new Member();
+	 	  		m.setUserNo(rset.getInt("USER_NO"));
+	 	  		...
+	 	  } <== 이거 대체함
+	 	  
+	 	  <resultMap id="식별자" type="조회된 결과를 담아서 반환하고자하는 VO객체의 타입(풀클래스명) 혹은 별칭">
+	 	  	<result column="조회된 결과를 뽑고자 하는 DB컬럼명" property="해당 결과를 담는 필드명" />
+	 	  	
+	 	  	<id column="USER_NO" property="userNo" /> pk컬럼은 이렇게 적어주면 얘가 index역할을 해서 조금 더 빨라진다.
+	 	  	<result column="USER_NO" property="userNo" />
+	 	  	
+	 	  </resultMap>	
+	  -->
+	  <!-- 
+	   내부적으로 필드에 대한 setter메소드를 호출 
+	  <resultMap id="memberResultSet" type="member">
+	  		<id column="USER_NO" property="userNo" />
+	  		<result column="USER_ID" property="userId"/>
+	  		<result column="USER_PWD" property="userPwd"/>
+	  		<result column="USER_NAME" property="userName"/>
+	  		<result column="EMAIL" property="email"/>
+	  		<result column="INTEREST" property="interest"/>
+	  		<result column="ENROLL_DATE" property="enrollDate"/>
+	  		<result column="MODIFY_DATE" property="modifyDate"/>
+	  		<result column="STATUS" property="status"/>
+	  </resultMap>
+	   -->
+	  
+	  <!--  resultMap="memberResultSet"-->
+	  <select id="login" parameterType="member" resultType="member"> 
+	  	SELECT 
+	  		   USER_NO as userNo, 
+	  		   USER_ID as userId, 
+	  		   USER_PWD as userPwd, 
+	  		   USER_NAME as userName, 
+	  		   EMAIL, 
+	  		   INTEREST, 
+	  		   ENROLL_DATE as enrollDate, 
+	  		   MODIFY_DATE as modifyDate, 
+	  		   STATUS 
+	  	  FROM 
+	  	  	   MEMBER 
+	  	 WHERE 
+	  	 	   USER_ID = #{userId} 
+	  	   AND 
+	  	   	   USER_PWD = #{userPwd} 
+	  	   AND 
+	  	   	   STATUS = 'Y'
+	  </select>
+	 
+	 <!-- SELECT문의 경우 다양한 형태의 결과가 반환될 수 있기 때문에
+	 == COUNT(*) => 정수 / 중복체크 => 문자여ㅓㄹ
+	 => 반드시 resultType(자바에서 제공하는 자료형) 또는 
+	 => resultMap(내가 만든 resultMap id)으로 결과따른 타입을 지정해줘야함!!!!
+	 
+	 <resultMap> 태그로 값 대입을 어떻게 할 지 지정하고 resultMap태그를 쓰거나,
+	 resultType으로 결과타입을 지정한 후에 별칭을 지어서 매칭해준다.
+	 
+	 혹시 varchar2타입을 int로 파싱해서 받아야 할 경우도 알아서 해준다.
+	 아예 매칭(설계가 잘못)되느 ㄴ경우는 그냥 에러날듯??
+	  -->
+	 
+	 
+
+
+</mapper>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="boardMapper">
+	
+	<resultMap id="boardResultSet" type="board">
+		<id column="BOARD_NO" property="boardNo"/>
+		<result column="BOARD_TITLE" property="boardTitle"/>
+		<result column="BOARD_WRITER" property="boardWriter"/>
+		<result column="COUNT" property="count"/>
+		<result column="CREATE_DATE" property="createDate"/> 
+		<result column="BOARD_CONTENT" property="boardContent"/>
+		<result column="BOARD_TYPE" property="boardType"/>
+		<result column="STATUS" property="status"/>
+		<result column="IMAGE_PATH" property="imagePath"/>
+		<result column="CATEGORY_NO" property="category"/>
+		<collection property="replyList" ofType="reply">
+			<id column="REPLY_NO" property="replyNo"/>
+			<result column="REPLY_WRITER" property="replyWriter"/>
+			<result column="REPLY_CONTENT" property="replyContent"/>
+			<result column="REPLY_DATE" property="createDate"/>
+		</collection>
+	</resultMap>
+
+	<sql id="boardList">
+	 SELECT 
+			   BOARD_NO, 
+			   BOARD_TITLE, 
+			   USER_ID, 
+			   COUNT, 
+			   CREATE_DATE 
+	</sql>
+
+ 	<select id="boardsCount" resultType="_int">
+ 		SELECT 
+ 			   COUNT(BOARD_NO) 
+ 		  FROM 
+ 		  	   BOARD 
+ 		 WHERE 
+ 		 	   STATUS = 'Y'
+ 	</select>
+ 	
+ 	<select id="findList" resultMap="boardResultSet">
+ 		<include refid="boardList"/>
+ 		, USER_ID AS BOARD_WRITER
+ 		, CATEGORY_NO
+ 		FROM BOARD LEFT JOIN MEMBER ON (BOARD_WRITER = USER_NO) WHERE BOARD_TYPE = 1 AND BOARD.STATUS = 'Y' ORDER BY BOARD.CREATE_DATE DESC
+ 	</select>
+ 	
+ 	<select id="findByNo" resultMap="boardResultSet">
+ 		<include refid="boardList"/>
+ 		, CATEGORY_NO
+ 		, BOARD_CONTENT
+ 		, BOARD_WRITER AS USER_ID
+ 		FROM BOARD LEFT JOIN MEMBER ON (BOARD.BOARD_WRITER = MEMBER.USER_NO) WHERE BOARD_NO = ${boardNo} AND BOARD.STATUS = 'Y'
+ 	</select>
+ 	
+ 	<insert id="insert" parameterType="board">
+ 		INSERT INTO BOARD
+					(BOARD_NO, BOARD_TITLE, BOARD_CONTENT, BOARD_WRITER, CATEGORY_NO, BOARD_TYPE)
+					VALUES (SEQ_BNO.NEXTVAL, #{boardTitle}, #{boardContent}, #{boardWriter}, #{category}, 1)
+ 	</insert>
+ 	
+ 	<update id="increseCount" parameterType="_int">
+ 		UPDATE BOARD SET COUNT = COUNT + 1 WHERE BOARD_NO = #{boardNo}
+ 	</update>
+ 	
+ 	<select id="findAllCategory" resultType="com.kh.ssuper.board.model.vo.Category">
+ 	
+ 	</select>
+
+</mapper>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-config.dtd">
+  <!-- 
+  	이 문서의 형식이 configuration(== 환경설정)임을 알려줌
+  	=> configuration요소가 전체를 감싸고 있음.
+  	전체를 감싸고 있는지 위 2-4번째 줄이 검사해주는 것.
+  	DTD : 유효성 검사를 해줌
+   -->
+<configuration>
+  
+  <!-- settings : Mybatis 구동 시 선언할 설정들을 작성하는 영역 -->
+  <settings>
+  <!-- value에 null도 대문자 NULL로 적어야한다. 조금이라도 대소문자 다르면 작동하지 않ㄴ음
+  jdbc에 빈값이 들어가게 되는 경우 null로 넣겠다는 설정.
+  만약에 빈 값으로 데이터가 전달되었다면 빈 칸이 아닌 NULL로 인식하겠다. 무조건 대문자 NULL로 써어ㅑ함!! -->
+  	<setting name="jdbcTypeForNull" value="NULL" />
+  </settings>
+  
+  <!-- typeAliases : VO / DTO 클래스들의 풀 클래스명을 단순한 별칭으로 사용하기 위해 등록하는 영역 -->
+  <typeAliases>
+  		<typeAlias type="com.kh.ssuper.member.model.vo.Member" alias="member" />
+  		<typeAlias type="com.kh.ssuper.board.model.vo.Board" alias="board" />
+  		<typeAlias type="com.kh.ssuper.board.model.vo.Reply" alias="reply" />
+  </typeAliases>
+  
+  <!-- 
+  		environments : MyBatis에서 연동한 DB의 정보들을 등록하는 영역(여러 개의 정보를 등록할 수 있음)
+  		=> default속성으로 여러 개의 id중 어떤 DB를 기본 DB로 사용할 것인지 꼭!! 지정해야함
+  --> 
+  <environments default="development">
+  	<environment id="development">
+  		<!-- 
+  			* transactionManager : type속성값으로 JDBC와 MANAGED중 하나를 선택할 수 있음
+  			- JDBC : 트랜잭션을 개발자가 직접 관리하겠다 (수동 commit을 하겠음)
+  			- MANAGED : 개발자가 트랜잭션에 대해 어떤 영향도 행사하지 않겠다 (자동 commit)
+  		 -->
+  		 <transactionManager type="JDBC"/>
+  		 
+  		 <!-- 
+  		 	* dataSource의 type속성으로는 POOLED와 UNPOOLED 둘 중 하나를 선택할 수 있음(ConnectionPool)
+  		 	커넥션 풀 쓸거야 말거야
+  		 	UNPOOLED는 풀 안 쓰고 요청 올 때마다 새롭게 만들어서 준다. 조금 늦어지긴 하지만 성능이 중요하지 않을 때 사용
+  		 	POOLED는 만약 커넥션 풀 안에 커넥션이 없다면 사용중인 커넥션이 돌아올 때까지 대기해야하는 단점, 대신 존재하는 동안은 빠름.
+  		 	ConnectionPool : Connection객체를 담아둘 수 있는 영역, 한 번 생성된 Connection을 재사용.
+  		 	
+  		 	POOLED => ConnectionPool 쓸거임(보통 씀)
+  		 	UNPOOLED => ConnectionPool 안 쓸거임
+  		 	** 쓰는 게 맞음 무조건 POOLED라고 작성하세요!
+  		  -->
+  		 <dataSource type="UNPOOLED">
+  		 	<property name="driver" value="oracle.jdbc.driver.OracleDriver" />
+  		 	<property name="url" value="jdbc:oracle:thin:@localhost:1521:xe" />
+  		 	<property name="username" value="SERVER"/>
+  		 	<property name="password" value="SERVER"/>
+  		 </dataSource>
+  	</environment>
+  </environments>
+  
+  <!-- mappers : 실행할 SQL문을 기록해둔 mapper파일을 등록하는 영역 
+  참고로 이거나, xml파일에서 자바타입을 별칭짓는 등의 경우 그 클래스, 파일이 실제로 그 경로에 존재하지 않는다면 찾을 수 없어서 500에러가 난다.
+  config를 읽는 과정에서 오류 발생하게 된다. 그리고 mapper태그로 선언을 했으면 그 !DOCTYPE mapper 파일이 필요한 것.
+  그리고 mapper태그에 필수적인 namespace등의 속성까지도 갖추고 있어야 오류나지 않는다.-->
+  <mappers>
+  	<mapper resource="/mapper/member-mapper.xml"/>
+  	<mapper resource="/mapper/board-mapper.xml" />
+  
+  
+  </mappers>	 
+  
+  
+  
+</configuration>

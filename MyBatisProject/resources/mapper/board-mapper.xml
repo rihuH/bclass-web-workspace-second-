@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="boardMapper">
+
+	<sql id="selectColumn">
+		SELECT 
+			   BOARD_NO AS boardNo, 
+			   BOARD_TITLE AS boardTitle, 
+			   USER_ID AS boardWriter, 
+			   COUNT, 
+			   CREATE_DATE createDate 
+	</sql>
+	
+	<!-- 자바타입으로 돌리고 싶으면 홈페이지에서 설명을 확인할 수 있음 -->
+	<select id="selectListCount" resultType="_int">
+		SELECT 
+			   COUNT(*) 
+		  FROM 
+		  	   BOARD 
+		 WHERE 
+		 	   STATUS = 'Y' 
+		   AND 
+		   	   BOARD_TYPE = 1
+	</select>
+	
+	<select id="selectList" resultType="board">
+		<include refid="selectColumn"/>
+		  FROM 
+		  	   BOARD 
+		  JOIN 
+		  	   MEMBER ON (BOARD_WRITER = USER_NO) 
+		 WHERE 
+		 	   BOARD.STATUS = 'Y'
+		   AND
+		   	   BOARD_TYPE = 1 
+		 ORDER 
+		    BY 
+		       CREATE_DATE DESC 
+	</select>
+
+	<update id="increaseCount" parameterType="_int">
+		UPDATE 
+			   BOARD 
+		   SET 
+		   	   COUNT = COUNT + 1 
+		 WHERE 
+		 	   BOARD_NO = #{boardNo} 
+		   AND 
+		   	   STATUS = 'Y'
+	</update>
+	
+	<select id="selectBoard" parameterType="_int" resultType="board">
+		<include refid="selectColumn"/> , 
+			   BOARD_CONTENT AS boardContent
+		  FROM 
+		  	   BOARD
+		  JOIN
+		  	   MEMBER ON (USER_NO = BOARD_WRITER) 
+		 WHERE 
+		 	   BOARD_NO = #{ boardNo }
+		   AND
+		   	   BOARD_TYPE = 1 
+		   AND 
+		   	   BOARD.STATUS = 'Y'
+	</select>
+	
+	<select id="selectReplyList" parameterType="_int" resultType="reply">
+		SELECT 
+			   REPLY_NO AS replyNo, 
+			   REPLY_CONTENT AS replyContent, 
+			   REF_BNO AS refBno, 
+			   REPLY_WRITER AS replyWriter, 
+			   CREATE_DATE AS createDate 
+		  FROM 
+		  	   REPLY 
+		  JOIN 
+		  	   MEMBER ON (REPLY_WRITER = USER_NO) 
+		 WHERE 
+		 	   REF_BNO = #{boardNo} 
+		   AND 
+		   	   REPLY.STATUS = 'Y' 
+	</select>
+	
+	<resultMap id="boardResultSet" type="board">
+		<id column="boardNo" property="boardNo" />
+		<result column="boardTitle" property="boardTitle"/>
+		<result column="boardWriter" property="boardWriter" />
+		<result column="count" property="count" />
+		<result column="createDate" property="createDate" />
+		<result column="boardContent" property="boardContent" />
+		<collection property="replyList" ofType="com.kh.ssuper.board.model.vo.Reply">
+			<id column="replyNo" property="replyNo"/>
+			<result column="replyWriter" property="replyWriter"/>
+			<result column="replyContent" property="replyContent"/>
+			<result column="replyDate" property="createDate"/>
+		</collection>
+	</resultMap>
+	
+	<select id="selectBoardAndReply" parameterType="_int" resultMap="boardResultSet">
+		SELECT 
+			   BOARD_NO AS boardNo, 
+			   BOARD_TITLE AS boardTitle, 
+			   M1.USER_ID AS boardWriter, 
+			   COUNT, 
+			   BOARD.CREATE_DATE createDate, 
+               BOARD_CONTENT AS boardContent,
+               REPLY_NO AS replyNo,
+               M1.USER_ID  AS replyWriter,
+               REPLY_CONTENT AS replyContent,
+               REPLY.CREATE_DATE AS replyDate
+		  FROM 
+		  	   BOARD
+		  LEFT
+		  JOIN
+		  	   MEMBER M1 ON (USER_NO = BOARD_WRITER) 
+          LEFT
+          JOIN
+               REPLY ON(BOARD_NO = REF_BNO)
+          LEFT
+          JOIN
+               MEMBER M2 ON (REPLY_WRITER = M2.USER_NO)
+		 WHERE 
+		 	   BOARD_NO = ${ boardNo }
+		   AND
+		   	   BOARD_TYPE = 1 
+		   AND 
+		   	   BOARD.STATUS = 'Y'
+         ORDER
+            BY
+               REPLY.CREATE_DATE DESC
+	</select>
+	
+	<select id="searchedCount" parameterType="hashmap" resultType="_int">
+		SELECT COUNT(*) FROM BOARD JOIN MEMBER ON (BOARD_WRITER = USER_NO) WHERE BOARD.STATUS='Y' AND
+		<if test="condition == 'content'">
+			BOARD_CONTENT
+		</if>
+		<if test="condition == 'writer'">
+			USER_ID
+		</if>
+		<if test="condition == 'title'">
+			BOARD_TITLE
+		</if>
+		 like '%' || #{keyword} || '%'
+	</select>
+	
+	<!-- parameterType은 안 적으면 알아서 판단함. resultType은 안 적으면 안됨 -->
+	<select id="selectSearchList" parameterType="hashmap" resultType="board">
+		<include refid="selectColumn"/>
+		 FROM 
+		 	  BOARD 
+		 JOIN 
+			  MEMBER ON (BOARD_WRITER = USER_NO) 
+		WHERE 
+			  BOARD.STATUS = 'Y'
+		<choose>
+			<when test="condition == 'writer'">
+				AND USER_ID
+			</when>
+			<when test="condition == 'title'">
+				AND BOARD_TITLE
+			</when>
+			<otherwise>
+				AND BOARD_CONTENT
+			</otherwise>
+		</choose>
+				  LIKE '%' || #{keyword} || '%'
+			ORDER 
+			   BY 
+			      BOARD_NO DESC
+	</select>
+	
+	<!-- 태그는 xml기반. jstl이랑 mybatis 문법이 비슷한 이유는 같이 xml을 기반으로 하기 때문 -->
+
+
+
+</mapper>
